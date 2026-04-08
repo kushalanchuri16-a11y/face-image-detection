@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Image Detection</title>
+</head>
+<body>
+  <h1>Face Image Classifier</h1>
+  <input type="file" id="upload" />
+  <p id="output"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+
+  <script>
+    let model;
+
+    async function init() {
+      model = await tmImage.load("model.json", "metadata.json");
+    }
+
+    document.getElementById("upload").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+
+      await init();
+      const predictions = await model.predict(img);
+
+      document.getElementById("output").innerText =
+        predictions.map(p => `${p.className}: ${p.probability.toFixed(2)}`).join("\n");
+    });
+  </script>
+</body>
+</html>
