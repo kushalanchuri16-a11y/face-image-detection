@@ -1,5 +1,3 @@
-# face-image-detection
-
 # Image Classifier (Teachable Machine)
 
 This project uses Google's Teachable Machine to classify images.
