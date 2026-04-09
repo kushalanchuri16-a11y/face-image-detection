@@ -3,7 +3,7 @@
 This project uses Google's Teachable Machine to classify images.
 
 ## Classes:
-- Class 1: Object
+- Class 1: Phone
 - Class 2: Face
 
 ## How to use:
