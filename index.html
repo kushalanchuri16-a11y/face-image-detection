@@ -1,34 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Face Image Detection</title>
+  <meta charset="UTF-8" />
+  <title>Face Image Classifier</title>
 </head>
 <body>
   <h1>Face Image Classifier</h1>
-  <input type="file" id="upload" />
-  <p id="output"></p>
+
+  <input type="file" id="upload" accept="image/*" />
+  <br><br>
+
+  <img id="preview" style="max-width:300px; display:none;" />
+  <p id="status"></p>
+  <pre id="output"></pre>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
 
   <script>
     let model;
+    let modelLoaded = false;
 
-    async function init() {
-      model = await tmImage.load("model.json", "metadata.json");
+    async function initModel() {
+      if (!modelLoaded) {
+        document.getElementById("status").innerText = "Loading model...";
+        model = await tmImage.load("model.json", "metadata.json");
+        modelLoaded = true;
+        document.getElementById("status").innerText = "Model loaded. Upload an image.";
+      }
     }
 
     document.getElementById("upload").addEventListener("change", async (e) => {
       const file = e.target.files[0];
-      const img = document.createElement("img");
+      if (!file) return;
+
+      await initModel();
+
+      const img = document.getElementById("preview");
       img.src = URL.createObjectURL(file);
+      img.style.display = "block";
 
-      await init();
-      const predictions = await model.predict(img);
+      img.onload = async () => {
+        document.getElementById("status").innerText = "Predicting...";
+        const predictions = await model.predict(img);
 
-      document.getElementById("output").innerText =
-        predictions.map(p => `${p.className}: ${p.probability.toFixed(2)}`).join("\n");
+        document.getElementById("output").innerText =
+          predictions
+            .map(p => `${p.className}: ${(p.probability * 100).toFixed(2)}%`)
+            .join("\n");
+
+        document.getElementById("status").innerText = "Done.";
+      };
     });
+
+    initModel();
   </script>
 </body>
 </html>
