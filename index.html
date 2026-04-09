@@ -1,59 +1,451 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Face Image Classifier</title>
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1e293b;
+      --card: rgba(255,255,255,0.08);
+      --line: rgba(255,255,255,0.14);
+      --text: #e5eefb;
+      --muted: #b8c4d9;
+      --accent: #60a5fa;
+      --accent2: #22c55e;
+      --danger: #f87171;
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,0.28), transparent 30%),
+        radial-gradient(circle at top right, rgba(34,197,94,0.18), transparent 25%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      padding: 32px 20px 48px;
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.3rem, 4vw, 4rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin: 14px auto 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 22px;
+      margin-top: 28px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      padding: 22px;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 22px;
+      text-align: center;
+      background: rgba(255,255,255,0.03);
+      transition: 0.2s ease;
+    }
+
+    .upload-box.dragover {
+      border-color: var(--accent);
+      background: rgba(96,165,250,0.12);
+      transform: translateY(-1px);
+    }
+
+    .upload-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 10px 26px rgba(37,99,235,0.35);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 12px;
+    }
+
+    #fileInput { display: none; }
+
+    .preview-wrap {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 320px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    #preview {
+      max-width: 100%;
+      max-height: 420px;
+      display: none;
+      object-fit: contain;
+    }
+
+    .placeholder {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 0.92rem;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(96,165,250,0.8);
+    }
+
+    .top-prediction {
+      border-radius: 20px;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(96,165,250,0.18), rgba(34,197,94,0.12));
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 18px;
+      min-height: 105px;
+    }
+
+    .top-label {
+      color: var(--muted);
+      font-size: 0.94rem;
+      margin-bottom: 8px;
+    }
+
+    .top-class {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .top-score {
+      margin-top: 6px;
+      color: #dbeafe;
+      font-size: 1rem;
+    }
+
+    .bars {
+      display: grid;
+      gap: 14px;
+    }
+
+    .bar-row {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 0.97rem;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.35s ease;
+    }
+
+    .error {
+      margin-top: 14px;
+      color: #fecaca;
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.25);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+      body { padding: 18px 14px 28px; }
+      .card { padding: 16px; }
+      .preview-wrap { min-height: 240px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Face Image Classifier</h1>
+  <div class="shell">
+    <div class="hero">
+      <div class="badge">Teachable Machine • Live Web Demo</div>
+      <h1>Face Image Classifier</h1>
+      <div class="subtitle">
+        Upload an image and the model will predict which class it belongs to. This version loads your Teachable Machine model directly from its hosted link.
+      </div>
+    </div>
 
-  <input type="file" id="upload" accept="image/*" />
-  <br><br>
+    <div class="grid">
+      <section class="card">
+        <div class="upload-box" id="dropZone">
+          <label class="upload-label" for="fileInput">Choose an Image</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div class="hint">Or drag and drop an image here</div>
+        </div>
 
-  <img id="preview" style="max-width:300px; display:none;" />
-  <p id="status"></p>
-  <pre id="output"></pre>
+        <div class="preview-wrap">
+          <div class="placeholder" id="placeholder">Your uploaded image will appear here.</div>
+          <img id="preview" alt="Uploaded preview" />
+        </div>
+      </section>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+      <section class="card">
+        <div class="results-header">
+          <h2 style="margin:0;font-size:1.2rem;">Predictions</h2>
+          <div class="status" id="status"><span class="dot"></span><span>Initializing...</span></div>
+        </div>
 
+        <div class="top-prediction">
+          <div class="top-label">Top prediction</div>
+          <div class="top-class" id="topClass">Waiting for image</div>
+          <div class="top-score" id="topScore">Upload a file to begin.</div>
+        </div>
+
+        <div class="bars" id="bars"></div>
+
+        <div class="error" id="errorBox"></div>
+
+        <div class="small">
+          If you changed your model recently, this page will still work because it uses your hosted Teachable Machine share link instead of local files.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
   <script>
-    let model;
-    let modelLoaded = false;
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/gwtcRzad6/";
+    const statusText = document.querySelector("#status span:last-child");
+    const preview = document.getElementById("preview");
+    const placeholder = document.getElementById("placeholder");
+    const bars = document.getElementById("bars");
+    const topClass = document.getElementById("topClass");
+    const topScore = document.getElementById("topScore");
+    const errorBox = document.getElementById("errorBox");
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
 
-    async function initModel() {
-      if (!modelLoaded) {
-        document.getElementById("status").innerText = "Loading model...";
-        model = await tmImage.load("model.json", "metadata.json");
-        modelLoaded = true;
-        document.getElementById("status").innerText = "Model loaded. Upload an image.";
+    let model = null;
+    let loadingPromise = null;
+
+    function setStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    async function loadModelOnce() {
+      if (model) return model;
+      if (!loadingPromise) {
+        setStatus("Loading model...");
+        loadingPromise = tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json")
+          .then((loaded) => {
+            model = loaded;
+            setStatus("Ready");
+            return model;
+          })
+          .catch((err) => {
+            setStatus("Load failed");
+            throw err;
+          });
+      }
+      return loadingPromise;
+    }
+
+    function renderPredictions(predictions) {
+      const sorted = [...predictions].sort((a, b) => b.probability - a.probability);
+      const winner = sorted[0];
+      topClass.textContent = winner.className;
+      topScore.textContent = `${(winner.probability * 100).toFixed(2)}% confidence`;
+
+      bars.innerHTML = "";
+      sorted.forEach((item) => {
+        const percent = (item.probability * 100).toFixed(2);
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+          <div class="bar-meta">
+            <strong>${item.className}</strong>
+            <span>${percent}%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${percent}%"></div>
+          </div>
+        `;
+        bars.appendChild(row);
+      });
+    }
+
+    async function classifyFile(file) {
+      try {
+        clearError();
+        setStatus("Preparing image...");
+
+        const objectUrl = URL.createObjectURL(file);
+        preview.src = objectUrl;
+        preview.style.display = "block";
+        placeholder.style.display = "none";
+
+        await preview.decode().catch(() => new Promise((resolve, reject) => {
+          preview.onload = () => resolve();
+          preview.onerror = () => reject(new Error("Image could not be loaded."));
+        }));
+
+        const loadedModel = await loadModelOnce();
+        setStatus("Predicting...");
+        const predictions = await loadedModel.predict(preview, false);
+        renderPredictions(predictions);
+        setStatus("Done");
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        console.error(err);
+        setStatus("Error");
+        showError("The model or image could not be processed. Make sure the hosted Teachable Machine link is still valid, then refresh and try again.");
       }
     }
 
-    document.getElementById("upload").addEventListener("change", async (e) => {
+    fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
-      if (!file) return;
-
-      await initModel();
-
-      const img = document.getElementById("preview");
-      img.src = URL.createObjectURL(file);
-      img.style.display = "block";
-
-      img.onload = async () => {
-        document.getElementById("status").innerText = "Predicting...";
-        const predictions = await model.predict(img);
-
-        document.getElementById("output").innerText =
-          predictions
-            .map(p => `${p.className}: ${(p.probability * 100).toFixed(2)}%`)
-            .join("\n");
-
-        document.getElementById("status").innerText = "Done.";
-      };
+      if (file) classifyFile(file);
     });
 
-    initModel();
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove("dragover");
+      });
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        classifyFile(file);
+      }
+    });
+
+    loadModelOnce().catch((err) => {
+      console.error(err);
+      showError("Could not load the model from the hosted Teachable Machine link.");
+    });
   </script>
 </body>
 </html>
